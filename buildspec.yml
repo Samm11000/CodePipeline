@@ -4,27 +4,26 @@ env:
   parameter-store:
     DOCKER_REGISTRY_USERNAME: /myapp/docker-credentials/username
     DOCKER_REGISTRY_PASSWORD: /myapp/docker-credentials/password
-    DOCKER_REGISTRY_URL: /myapp/docker-registry/url   # e.g. index.docker.io
+    DOCKER_REGISTRY_URL: /myapp/docker-registry/url
 
 phases:
   install:
     runtime-versions:
       python: 3.11
-    commands:
-      - echo "✅ Install phase started..."
 
   pre_build:
     commands:
       - echo "✅ Installing Python dependencies..."
       - pip install -r requirements.txt
-      - echo "✅ Logging into Docker registry..."
-      - echo "$DOCKER_REGISTRY_PASSWORD" | docker login "$DOCKER_REGISTRY_URL" -u "$DOCKER_REGISTRY_USERNAME" --password-stdin
 
   build:
     commands:
-      - echo "✅ Build phase: building Docker image..."
+      - echo "✅ Running tests..."
+      - echo "✅ Logging in to Docker registry..."
+      - echo "$DOCKER_REGISTRY_PASSWORD" | docker login -u "$DOCKER_REGISTRY_USERNAME" --password-stdin "$DOCKER_REGISTRY_URL"
       - IMAGE_TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION:-latest}
       - IMAGE_URI="$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/simple-python-flask-app:$IMAGE_TAG"
+      - echo "✅ Building Docker image: $IMAGE_URI"
       - docker build -t "$IMAGE_URI" .
       - echo "✅ Pushing Docker image..."
       - docker push "$IMAGE_URI"
@@ -32,7 +31,7 @@ phases:
   post_build:
     commands:
       - echo "✅ Build completed successfully!"
-      - echo "Image pushed: $IMAGE_URI"
+      - echo "✅ Image pushed: $IMAGE_URI"
 
 artifacts:
   files:
